@@ -8,7 +8,7 @@
     <button type="submit" aria-label="Edit task: {{ task.title }}">Edit</button>
   </form>
 
-  <form action="/tasks/{{ task.id }}/delete" method="get" style="display: inline;"
+  <form action="/tasks/{{ task.id }}/delete" method="post" style="display: inline;"
         hx-delete="/tasks/{{ task.id }}"
         hx-target="#task-{{ task.id }}"
         hx-swap="outerHTML"

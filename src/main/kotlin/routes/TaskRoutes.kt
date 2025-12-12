@@ -40,6 +40,7 @@ fun Routing.configureTaskRoutes(store: TaskStore = TaskStore()) {
     get("/tasks/{id}/view") { call.handleViewTask(store) }
     post("/tasks/{id}/toggle") { call.handleToggleTask(store) }
     delete("/tasks/{id}") { call.handleDeleteTask(store) }  // HTMX path (RESTful)
+    get("/tasks/{id}/delete") { call.handleDeleteConfirm(store) }  // No-JS confirmation page
     post("/tasks/{id}/delete") { call.handleDeleteTask(store) }  // No-JS fallback
     get("/tasks/search") { call.handleSearchTasks(store) }
 }
@@ -173,6 +174,32 @@ private suspend fun ApplicationCall.handleToggleTask(store: TaskStore) {
             respond(HttpStatusCode.SeeOther)
         }
     }
+}
+
+/**
+ * Handle delete confirmation page (no-JS support).
+ */
+private suspend fun ApplicationCall.handleDeleteConfirm(store: TaskStore) {
+    val id = parameters["id"] ?: run {
+        respond(HttpStatusCode.BadRequest, "Missing task ID")
+        return
+    }
+
+    val task = store.getById(id)
+    if (task == null) {
+        respond(HttpStatusCode.NotFound, "Task not found")
+        return
+    }
+
+    // For HTMX requests, skip confirmation and show error
+    if (isHtmxRequest()) {
+        respondRedirect("/tasks")
+        return
+    }
+
+    // For no-JS requests, show confirmation page
+    val html = renderTemplate("tasks/delete_confirm.peb", mapOf("task" to task.toPebbleContext()))
+    respondText(html, ContentType.Text.Html)
 }
 
 /**
